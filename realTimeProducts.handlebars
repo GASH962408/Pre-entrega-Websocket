@@ -1,0 +1,61 @@
+<h1>Lista de productos en tiempo real</h1>
+<ul id="product-list">
+  {{#each products}}
+  <li>
+    <div>
+      <h3>{{title}}</h3>
+      <p>Precio: {{price}}</p>
+      <img src="{{image}}" alt="Imagen del producto">
+    </div>
+    <button class="delete-product-btn" data-id="{{id}}">Eliminar</button>
+  </li>
+  {{/each}}
+</ul>
+
+<form id="create-product-form" action="/create-product" method="POST">
+  <input type="text" name="title" placeholder="Título del producto" required>
+  <input type="text" name="description" placeholder="Descripción del producto" required>
+  <input type="number" name="price" placeholder="Precio del producto" required>
+  <input type="text" name="image" placeholder="URL de la imagen del producto" required>
+  <button type="submit">Agregar Producto</button>
+</form>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  // Escucha el evento de nuevo producto
+
+  socket.on('newProduct', (product) => {
+    const productList = document.getElementById('product-list');
+    const listItem = document.createElement('li');
+    listItem.innerHTML = `
+      <div>
+        <h3>${product.title}</h3>
+        <p>Precio: ${product.price}</p>
+        <img src="${product.image}" alt="Imagen del producto">
+      </div>
+      <button class="delete-product-btn" data-id="${product.id}">Eliminar</button>
+    `;
+    productList.appendChild(listItem);
+  });
+
+
+  // Escucha el evento de producto eliminado
+  
+  socket.on('productDeleted', (productId) => {
+    const productList = document.getElementById('product-list');
+    const listItem = productList.querySelector(`li[data-id="${productId}"]`);
+    if (listItem) {
+      listItem.remove();
+    }
+  });
+
+  // Manejar el evento de clic en el boton de eliminacion
+  document.addEventListener('click', (event) => {
+    if (event.target.classList.contains('delete-product-btn')) {
+      const productId = event.target.dataset.id;
+      socket.emit('deleteProduct', productId);
+    }
+  });
+</script>
